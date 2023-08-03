@@ -1,20 +1,44 @@
-meme_dict = {
-    "CRINGE": "Sesuatu yang aneh atau memalukan",
-    "LOL": "Tanggapan umum terhadap sesuatu yang lucu",
-    "ROFL" : "tanggapan terhadap lelucon",
-    "SHEESH" : "sedikit ketidaksetujuan",
-    "BTW" : "By The Way",
-    "CREEPY" : "menakutkan, tidak menyenangkan",
-    "AGGRO" : "menjadi agresif/marah"
-    }
+import discord
+from bot_logic import gen_pass
+import random, asyncio
+# Variabel intents menyimpan hak istimewa bot
+intents = discord.Intents.default()
+# Mengaktifkan hak istimewa message-reading
+intents.message_content = True
+# Membuat bot di variabel klien dan mentransfernya hak istimewa
+client = discord.Client(intents=intents)
 
-while True:
-    word = input("Ketik kata yang tidak kamu mengerti (Gunakan hurif kapital semua!):")
+@client.event
+async def on_ready():
+    print(f'Kita telah masuk sebagai {client.user}')
+
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+    if message.content.startswith('$halo'):
+        await message.channel.send("Hi!")
+    elif message.content.startswith('$bye'):
+        await message.channel.send("\\U0001f642")
+    elif message.content.startswith('$pass'):
+        await message.channel.send(gen_pass(8))
     
-    if word in meme_dict.keys():
-        # Apa yang harus kita lakukan jika kata itu ditemukan?
-        print(meme_dict[word])
-    else:
-        # Apa yang harus kita lakukan kata itu tidak ditemukan?
-        print("Mohon maaf masih kudet")
-    
+    elif message.content.startswith('$guess'):
+        await message.channel.send('Guess a number between 1 and 10.')
+
+        def is_correct(m):
+            return m.author == message.author and m.content.isdigit()
+
+        answer = random.randint(1, 10)
+
+        try:
+            guess = await client.wait_for('message', check=is_correct, timeout=5.0)
+        except asyncio.TimeoutError:
+            return await message.channel.send(f'Sorry, you took too long it was {answer}.')
+
+        if int(guess.content) == answer:
+            await message.channel.send('You are right!')
+        else:
+            await message.channel.send(f'Oops. It is actually {answer}.')
+
+client.run("Isi token di sini")
